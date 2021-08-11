@@ -1,0 +1,16 @@
+{
+   "extends": "@tsconfig/node14/tsconfig.json",
+   "sourceMap": true,
+   "ts-node": {
+      "files": true,
+      "compilerOptions": {
+      }
+   },
+   "compilerOptions": {
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "strictPropertyInitialization": false
+   }
+}

@@ -1,0 +1,68 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DEV_DB_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}
+
+enum EventTag {
+  ERROR
+  INFO
+}
+
+model Consumer {
+  id              String  @id @default(uuid()) @db.Uuid
+  role            Role    @default(USER)
+  username        String  @unique
+  email           String  @unique
+  passwordHash    String
+  verified        Boolean @default(false)
+  howManyPerMonth Int
+
+  // timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relation declarations
+  logs     Log[]
+  sessions Session[]
+}
+
+model Session {
+  id     String    @id @default(uuid()) @db.Uuid
+  userId String    @db.Uuid
+  active Boolean
+  exp    DateTime?
+
+  // timestamps
+  createdAt DateTime @default(now())
+
+  // references
+  user Consumer @relation(fields: [userId], references: [id])
+}
+
+model Log {
+  id           String   @id @default(uuid()) @db.Uuid
+  ip           String
+  userId       String?   @db.Uuid
+  method       String
+  route        String
+  tag          EventTag @default(INFO)
+  statusCode   Int
+  useragent    String
+  responseTime Float
+
+  // timestamps
+  createdAt DateTime @default(now())
+
+  // references
+  blame Consumer? @relation(fields: [userId], references: [id])
+}
