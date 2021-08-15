@@ -24,11 +24,13 @@ export function lastErrorHandler( // @ts-ignore
   // @ts-ignore
   const { endpointPathIdentifier } = req;
   err.name = endpointPathIdentifier ?? "SERVER";
+  err.code = err.code ?? ErrorCode.UNKNOWN_ERROR;
+  err.status = err.status ?? 500;
 
   if (err && err.message) {
     const { message, status, code } = err;
-    Log.e(`(${code ?? ErrorCode.UNKNOWN_ERROR}) ${message}`, err.name);
-    res.status(status ?? 500).send({ error: getPureError(err) });
+    Log.e(`(${code}) ${message}`, err.name);
+    res.status(status).send({ error: getPureError(err) });
   } else {
     console.dir(err);
     lastErrorHandler(R.errors.UNKNOWN_ERROR, req, res, next);

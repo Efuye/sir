@@ -25,7 +25,7 @@ model Consumer {
   email           String  @unique
   passwordHash    String
   verified        Boolean @default(false)
-  howManyPerMonth Int
+  howManyPerMonth Int     @default(0)
 
   // timestamps
   createdAt DateTime @default(now())

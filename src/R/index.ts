@@ -1,4 +1,4 @@
-import { media } from "./values";
+import { media, logs } from "./values";
 import errors from "./errors";
 
 /**
@@ -9,4 +9,4 @@ import errors from "./errors";
  * @type { Object }
  * @readonly
  */
-export const R: any = { values: { media }, errors };
+export const R: any = { values: { media, logs }, errors };

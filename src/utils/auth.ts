@@ -1,7 +1,7 @@
 import { Response, Request, NextFunction } from "express";
 import { R } from "../R";
 import jwt from "jsonwebtoken";
-import { db } from "../server";
+import { db } from "../api";
 
 const tokenSecrete: jwt.Secret | undefined =
   process.env.ENV === "test" || process.env.ENV === "testing"
@@ -52,6 +52,7 @@ export async function authMiddleWare(
 ): Promise<void | Response> {
   let token: string | undefined =
     req.headers.authorization?.split("Bearer ")[1];
+
   if (!token) throw R.errors.UNAUTHORIZED;
 
   let payload = await verifyToken(token);

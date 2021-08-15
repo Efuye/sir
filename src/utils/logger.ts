@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import fs from "fs";
 import { R } from "../R";
 import { EventTag } from "@prisma/client";
-import { db } from "../server";
+import { db } from "../api";
 
 const chalk = require("chalk");
 
@@ -50,22 +50,23 @@ export function morganFormat(
     tokens["user-agent"](req, res),
     tokens["response-time"](req, res),
     "ms",
-  ].join(" ");
+  ].join("<--->");
 }
 
 export async function write(message: string) {
+  const messageBits = message.split("<--->");
+
   fs.appendFile(
-    `${R.values.logsBaseDirectory}request/requests.log`,
-    message,
+    `${R.values.logs.logsBaseDirectory}request/requests.log`,
+    messageBits.join(" "),
     () => {
-      if (!fs.existsSync(`${R.values.logsBaseDirectory}request/`))
-        fs.mkdirSync(`${R.values.logsBaseDirectory}request/`, {
+      if (!fs.existsSync(`${R.values.logs.logsBaseDirectory}request/`))
+        fs.mkdirSync(`${R.values.logs.logsBaseDirectory}request/`, {
           recursive: true,
         });
     }
   );
 
-  const messageBits = message.split(" ");
   const statusCode = Number.parseInt(messageBits[5]);
 
   await db.log.create({
