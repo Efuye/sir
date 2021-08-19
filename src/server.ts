@@ -1,6 +1,7 @@
 import express from "express";
 import "express-async-errors";
-import "express-zip";
+// @ts-ignore
+import zip from "express-easy-zip";
 import cors from "cors";
 import { json } from "express";
 import morgan from "morgan";
@@ -22,6 +23,7 @@ app.use(
   })
 );
 app.use(tagRequest);
+app.use(zip());
 
 app.use("/test", testRouter);
 app.use("/signup", signupRouter);
@@ -35,6 +37,8 @@ export async function start() {
     console.log(`Server listening on http://localhost:${process.env.PORT}/`);
   });
 }
+
+export const ExpressApp = app;
 
 // TODO encryption
 // TODO fucking fix the log fetch

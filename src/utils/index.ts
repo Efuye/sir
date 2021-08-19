@@ -34,7 +34,7 @@ interface Projection {
  * Filters out the attributes of an object based on the
  * given projections.
  *
- * Note: `exclude` take precedence over `include`.
+ * **Note**: *exclude* take precedence over *include*.
  */
 export const cleanseObject = function cleanseObject(
   object: object,

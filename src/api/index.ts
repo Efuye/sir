@@ -13,7 +13,7 @@ export const testRouter = Router();
 export const signinRouter = Router();
 export const signupRouter = Router();
 export const router = Router();
-export const db = new PrismaClient();
+export const db = new PrismaClient({ log: ["query", "info", "warn", "error"] });
 const upload: multer.Multer = getUploadMiddleware();
 
 testRouter.get("/", async function (req: Request, res: Response) {
@@ -129,10 +129,16 @@ router.get("/consumer", async function (req: Request, res: Response) {
       user: { role },
     },
   } = req;
-  const { id, limit, createdAt, searchString } = req.query;
-  const filterCondition: any = {
-    NOT: { OR: [{ role: Role.ADMIN }, { role: Role.OWNER }] },
-  };
+  const { id, limit, createdAt, searchString, all } = req.query;
+  const filterCondition: any = {};
+
+  if (all) filterCondition["NOT"] = { role: Role.OWNER };
+  else
+    filterCondition["NOT"] = {
+      OR: [{ role: Role.ADMIN }, { role: Role.OWNER }],
+    };
+
+  console.log(`${id} ${limit} ${createdAt} ${searchString}`);
 
   if (role !== Role.ADMIN && role !== Role.OWNER)
     throw R.errors.UNAUTHORIZED_RESOURCE_ACCESS;
@@ -142,7 +148,9 @@ router.get("/consumer", async function (req: Request, res: Response) {
 
   if (id) filterCondition.id = id;
   else if (searchString) {
-    const condition: any = { contains: `%${searchString}%` };
+    const condition: any = {
+      contains: `%${searchString}%`,
+    };
 
     filterCondition["OR"] = ["username", "email"].map((column) => {
       return { [column]: condition };
@@ -161,6 +169,19 @@ router.get("/consumer", async function (req: Request, res: Response) {
       return cleanseObject(consumer, {
         exclude: ["passwordHash", "verified", "updatedAt", "createdAt"],
       });
+    }),
+  });
+});
+
+router.get("/consumer/me", async function (req: Request, res: Response) {
+  const {
+    // @ts-ignore
+    session: { user },
+  } = req;
+
+  res.status(200).send({
+    data: cleanseObject(user, {
+      exclude: ["passwordHash", "verified", "updatedAt", "createdAt"],
     }),
   });
 });
@@ -287,7 +308,7 @@ router.post(
         });
 
         // @ts-ignore
-        res.zip(returnables, `${file?.originalname}`);
+        res.zip({ files: returnables, filename: `${file?.originalname}` });
       } catch (err) {
         next(err);
       }
@@ -305,27 +326,28 @@ router.get("/log", async function (req: Request, res: Response) {
   const { id, limit, createdAt, searchString } = req.query;
   const filterCondition: any = {};
 
+  console.log(`${id} ${limit} ${createdAt} ${searchString}`);
+
   if (role !== Role.ADMIN && role !== Role.OWNER)
     throw R.errors.UNAUTHORIZED_RESOURCE_ACCESS;
 
   if (createdAt)
-    filterCondition.createdAt = { gt: new Date(createdAt as string) };
+    filterCondition.createdAt = { lt: new Date(createdAt as string) };
   if (id) filterCondition.id = id;
   if (searchString) {
-    const condition: any = { contains: `%${searchString}%` };
+    const condition: any = {
+      contains: `%${searchString}%`,
+      mode: "insensitive",
+    };
 
-    filterCondition["OR"] = [
-      "tag",
-      "ip",
-      "method",
-      "route",
-      "statusCode",
-      "useragent",
-      "responseTime",
-    ].map((column) => {
-      return { [column]: condition };
-    });
+    filterCondition["OR"] = ["ip", "method", "route", "useragent"].map(
+      (column) => {
+        return { [column]: condition };
+      }
+    );
   }
+
+  console.dir(filterCondition);
 
   const logs = await db.log.findMany({
     where: filterCondition,
@@ -335,6 +357,9 @@ router.get("/log", async function (req: Request, res: Response) {
       },
     },
     take: Number.parseInt(limit as string) || 30,
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   if (!logs.length) throw R.errors.LOGS_NOT_FOUND;
